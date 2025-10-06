@@ -31,6 +31,8 @@ A1 = 0.003354016
 B1 = 0.000256985
 C1 = 0.000002620131
 D1 = 0.00000006383091
+#Useful variables
+
 
 # Allows you to display two lines that you fill in
 def display(phrase1, phrase2):
@@ -88,7 +90,10 @@ temoin.on()
 while True:
     update_buttons_states()
     update_temperature()
-
+    if button_1 = 1 :
+        while button_3 == 0 :
+            update_buttons_states()
+            
     
     sleep(0.1)
 
