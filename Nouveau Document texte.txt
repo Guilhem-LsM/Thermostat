@@ -1,0 +1,4 @@
+git add .					git fetch
+git commit -m "nom commit"
+git push -u origin merwan
+

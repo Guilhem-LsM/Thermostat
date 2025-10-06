@@ -39,6 +39,18 @@ def display(phrase1, phrase2):
     lcd.set_line(1) 
     lcd.message(phrase2)
     
+def langue():
+    langue=99
+    while langue==99:
+        display("0.francais, 1.anglais"):
+        if button_1==0
+        display("0.francais"):
+        if button_2=1
+        display("1.anglais"):
+    
+        
+        
+    
 def update_buttons_states():
     # Set the button_1 button_2 button_3 to the values of the buttons
     if pin13.value() == 0 :
