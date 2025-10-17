@@ -4,12 +4,14 @@ from machine import ADC, RTC, Pin
 from LCD import CharLCD
 import math
 import time
+import random
 
 # Inputs/Outputs
 temoin = Pin(25, Pin.OUT)
-pin13 = Pin(13, Pin.IN, Pin.PULL_UP)
+pin13 = Pin(13, Pin.IN, Pin.PULL_UP) # PULL_UP invers output, buttons don't work with this
 pin14 = Pin(14, Pin.IN, Pin.PULL_UP)
 pin15 = Pin(15, Pin.IN, Pin.PULL_UP)
+red_led = Pin(18, Pin.OUT)
 lcd = CharLCD(rs=2, en=4, d4=7, d5=8, d6=9, d7=10, cols=16, rows=2)
 button_1 = 0
 button_2 = 0
@@ -35,8 +37,15 @@ D1 = 0.00000006383091
 temperature_list = []
 menu = 0 # 0: main menu ; # 1: temperature menu
 language = -1
-password = 000000
+password = 0
+words_list = ["Heating", "Chauffage", "Cooling", "Climatisation", "Now", "Actuel", "Set", "Cible", "Set Mode", "Mode", "E", "F", "Back", "Retour", "Right Password", "Bon MDP", "Wrong password", "Mauvais MDP"]
+psw = ""
+number = 0
+timer = 0
+char = " "
 
+def word(virtual_index):
+    return words_list[virtual_index*2 + language]
 
 # Allows you to display two lines that you fill in
 def display(phrase1, phrase2):
@@ -80,8 +89,6 @@ def save_temperature():
     print(line)
     with open("datas.txt", "w") as f:
         f.write(line)
-    print("saved !")
-
 
     
 def update_language():
@@ -113,7 +120,6 @@ def update_language():
 def save_mode() :
     with open("mode.txt","w")as f:
         f.write("mode:" + str(mode))
-    print("mode saved !")
     lcd.clear()
 
 def update_mode():
@@ -125,16 +131,13 @@ def update_mode():
     while button_1 == 0 and button_2 == 0 :
         update_buttons_states()
         t = t + 1
-        display("1.Chauffage", "2.Climatisation")
+        display("1." + word(0), "2." + word(1))
         if button_1 :
             mode = 0
-            print("1")
         elif button_2 :
             mode = 1
-            print("2")
     button_1 = 0
     button_2 = 0
-    save_mode()
     menu = 0
     sleep(0.5)
     
@@ -154,9 +157,7 @@ else :
 if "mode.txt" in os.listdir():
     with open("mode.txt", "r") as f:
         lines_list = f.readlines()
-    mode = int(lines_list[0].split(":")[1]) # 0 : Chauffage ; 1 : Climatisation
-    print("Mode : " + str(mode))
-
+        mode = int(lines_list[0].split(":")[1]) # 0 : Chauffage ; 1 : Climatisation
 else :
     update_mode()
     with open("mode.txt", "a") as f:
@@ -171,7 +172,29 @@ else :
     with open("datas.txt", "a") as f:
         f.write("20;20;20;20;20;20;20;20;20;20;20;20;20;20;20;20;20;20;20;20;20;20;20;20")
     temperature_list = "20;20;20;20;20;20;20;20;20;20;20;20;20;20;20;20;20;20;20;20;20;20;20;20".split(";")
-    
+
+# Look if the password.txt exist, if not create it and choose a password randomly
+if "password.txt" in os.listdir():
+    with open("password.txt", "r") as f:
+        lines_list = f.readlines()
+        password = lines_list[0].split(":")[0]
+else :
+    # Create password.txt, generate a random password and put it in password.txt
+    with open("password.txt", "a") as f:
+        f.write(str(random.randint(100000, 999999)))
+    # Open password.txt and recover the password to put it in password
+    with open("password.txt", "r") as f:
+        lines_list = f.readlines()
+        password = int(lines_list[0].split(":")[0])
+        lcd.clear()
+        display(str(password),"")
+        while button_1 != 1 and button_2 != 1 and button_3 != 1 :
+            update_buttons_states()
+        button_1 = 0
+        button_2 = 0
+        button_3 = 0
+        lcd.clear()
+        sleep(0.5)
         
 
 # Indicator of proper functioning
@@ -186,14 +209,13 @@ while True:
     
     if menu == 0 :
         # Display actual temperature and the choose temperature
-        display("T : " + f"{temperature:.2f}", "Select T : " + temperature_list[time.localtime()[3]])
+        display(word(2) + ": " + f"{temperature	:.2f}C", word(3) + ": " + temperature_list[time.localtime()[3]])
+        # Display hours
+        lcd.set_cursor(10,1)
+        lcd.message(str(time.localtime()[3])+"h"+str(time.localtime()[4]))
         # Display the language on th right
-        if language :
-            string = "F"
-        else :
-            string = "E"
         lcd.set_cursor(15,0)
-        lcd.message(string)
+        lcd.message(word(5))
         # Check if button 1 and 2 is pressed
         if button_1 and button_2 and button_3:
             menu = 2
@@ -207,6 +229,7 @@ while True:
             menu = 1 # Set to temperature menu
             lcd.clear()
             hour = time.localtime()[3]
+            lcd.clear()
         elif button_2 :
             button_2 = 0
             sleep(0.1)
@@ -239,6 +262,7 @@ while True:
             menu = 1.1
             button_2 = 0
             temp = int(temperature_list[hour])
+            lcd.clear()
 
     if menu == 1.1 :
         
@@ -255,26 +279,28 @@ while True:
         display("","-      ok      +")
         
         sleep(0.05)
-        if button_1 == 1 :
-            temp = temp - 1
-        if button_3 == 1 :
-            temp = temp + 1
+        if button_1 == 1 and temp > 10:
+            temp = temp - 0.5
+        if button_3 == 1 and temp < 25:
+            temp = temp + 0.5
         
         if button_2 :
             menu = 0
             button_2 = 0
             temperature_list[hour] = str(temp)
             save_temperature()
+            lcd.clear()
+            
     if menu == 2 :
-        display("1.change mode","2.back")
+        display("1." + word(4),"2." + word(6))
         if button_1 :
             button_1 = 0
-            lcd.clear()
             menu = 2.1
             psw = ""
             number = 0
             timer = 0
             char = " "
+            lcd.clear()
         elif button_2 :
             menu = 0
             lcd.clear()
@@ -311,28 +337,43 @@ while True:
             button_2 = 0
             psw = psw + str(number)
             sleep(0.1)
-            
             number = 0
+            
         if number > 9 :
             number = 0
         if number < 0 :
             number = 9
             
         if len(psw) >= 6 :
-            if int(psw) == password :
+            if psw == password :
                 lcd.clear()
-                display("Right Password !","")
+                display(word(7),"")
                 menu = 2.2
             else :
                 lcd.clear()
-                display("Wrong Password","")
+                display(word(8),"")
                 menu = 0
+            print(psw)
+            print(password)
             sleep(2)
             lcd.clear()
+
             
     if menu == 2.2 :
         update_mode()
-             
+        save_mode()
+    
+    # If mode si on Cooling
+    if mode == 0 :
+        if temperature < float(temperature_list[time.localtime()[3]]) :
+            red_led.on()
+        else :
+            red_led.off()
+    elif mode == 1 :
+        if temperature > float(temperature_list[time.localtime()[3]]) :
+            red_led.on()
+        else :
+            red_led.off()
         
     sleep(0.1)
 
