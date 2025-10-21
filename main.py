@@ -33,7 +33,7 @@ A1 = 0.003354016
 B1 = 0.000256985
 C1 = 0.000002620131
 D1 = 0.00000006383091
-#Useful variables
+#Useful variables, set variables
 temperature_list = []
 menu = 0 # 0: main menu ; # 1: temperature menu
 language = -1
@@ -43,6 +43,8 @@ psw = ""
 number = 0
 timer = 0
 char = " "
+mode = 0
+hour = 0
 
 def word(virtual_index):
     return words_list[virtual_index*2 + language]
