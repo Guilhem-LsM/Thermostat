@@ -1,4 +1,4 @@
-import os
+import os #operating system
 from time import sleep
 from machine import ADC, RTC, Pin
 from LCD import CharLCD
@@ -17,11 +17,11 @@ button_1 = 0
 button_2 = 0
 button_3 = 0
 #Variables and values for the temperature
-adc = ADC(27)
-value = 0
+adc = ADC(27) # ADC = Analog digital converter ( pin 27 ) : thermistance
+thermistance_16bit_value = 0
 resistance = 0
 temperature = 0
-v_m = 0
+v_thermistance = 0
 R_REF = 2200
 R_FIXE = 1000
 V_TOT = 3.3
@@ -39,6 +39,16 @@ menu = 0 # 0: main menu ; # 1: temperature menu
 language = -1
 password = 0
 words_list = ["Heating", "Chauffage", "Cooling", "Climatisation", "Now", "Actuel", "Set", "Cible", "Set Mode", "Mode", "E", "F", "Back", "Retour", "Right Password", "Bon MDP", "Wrong password", "Mauvais MDP"]
+# Heating, Chauffage :          0
+# Cooling, Climatisation :      1
+# Now, Actuel :                 2
+# Set, Cible :                  3
+# Set Mode, Mode :              4
+# E, F :                        5
+# Back, Retour :                6
+# Right Password, Bon MDP :     7
+# Wrong password, Mauvais MDP : 8
+
 psw = ""
 number = 0
 timer = 0
@@ -77,9 +87,9 @@ def update_buttons_states():
 def update_temperature():
     # Calculate the temperature
     global temperature
-    value = adc.read_u16()
-    v_m = 3.3/pow(2,16)*value
-    resistance = R_FIXE*V_TOT/v_m - R_FIXE
+    thermistance_16bit_value = adc.read_u16()
+    v_thermistance = 3.3/pow(2,16)*thermistance_16bit_value
+    resistance = R_FIXE*V_TOT/v_thermistance - R_FIXE
     temperature = (A1 + B1*math.log(resistance/R_REF)+C1*math.log(resistance/R_REF)**2+D1*math.log(resistance/R_REF)**3)**-1
     temperature = temperature - 273.15
     
